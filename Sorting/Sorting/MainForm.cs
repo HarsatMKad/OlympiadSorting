@@ -10,6 +10,7 @@ using System.Collections;
 using System.Windows.Forms;
 using System.Diagnostics;
 using Microsoft.CSharp;
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace Sorting
 {
@@ -17,15 +18,18 @@ namespace Sorting
   {
     List<int> NumberList = new List<int>();
     List<long> TimerList = new List<long>();
+    List<int> IterationList = new List<int>();
+    int IterationQuick;
     public MainForm()
     {
       InitializeComponent();
     }
 
-    private void BubbleSort()
+    private void BubbleSort(List<int> List, bool Ascending)
     {
-      List<int> BubbleList = NumberList;
+      List<int> BubbleList = List;
       Stopwatch stopwatch = new Stopwatch();
+      int Iteration = 0;
       stopwatch.Start();
 
       int temp = 0;
@@ -33,8 +37,9 @@ namespace Sorting
       {
         for(int sort = 0; sort < BubbleList.Count - 1; sort++)
         {
-          if (BubbleList[sort] > BubbleList[sort + 1])
+          if ((Ascending && BubbleList[sort] > BubbleList[sort + 1]) || (!Ascending && BubbleList[sort] < BubbleList[sort + 1]))
           {
+            ++Iteration;
             temp = BubbleList[sort + 1];
             BubbleList[sort + 1] = BubbleList[sort];
             BubbleList[sort] = temp;
@@ -49,53 +54,61 @@ namespace Sorting
         chart1.Series[0].Points.AddXY(index, BubbleList[index]);
       }
 
-      label2.Text = "Пузыри - " + stopwatch.ElapsedTicks.ToString();
+      label2.Text = "Пузыри - " + stopwatch.ElapsedTicks.ToString() + "    " + Iteration;
       TimerList.Add(stopwatch.ElapsedTicks);
+      IterationList.Add(Iteration);
     }
 
-    private void InsertionSort()
+    private void InsertionSort(List<int> List, bool Ascending)
     {
-      List<int> InsertionList = NumberList;
+      List<int> InsertionList = List;
       Stopwatch stopwatch = new Stopwatch();
+      int Iteration = 0;
       stopwatch.Start();
-
+      
       for(int index = 1; index < InsertionList.Count; index++)
       {
         int k = InsertionList[index];
         int j = index - 1;
-         while(j >= 0 && InsertionList[j] > k)
+         while(j >= 0 && ((Ascending && InsertionList[j] > k) || (!Ascending && InsertionList[j] < k)))
         {
+          ++Iteration;
           InsertionList[j + 1] = InsertionList[j];
+          InsertionList[j] = k;
           j--;
         }
-        InsertionList[j] = k;
       }
+      
       stopwatch.Stop();
 
       chart1.Series[1].Points.Clear();
-      for (int i = 0; i < NumberList.Count; ++i)
+      for (int i = 0; i < InsertionList.Count; ++i)
       {
         chart1.Series[1].Points.AddXY(i, InsertionList[i]);
       }
 
-      label3.Text = "Вставки - " + stopwatch.ElapsedTicks.ToString();
+      label3.Text = "Вставки - " + stopwatch.ElapsedTicks.ToString() + "    " + ++Iteration;
       TimerList.Add(stopwatch.ElapsedTicks);
+      IterationList.Add(Iteration);
     }
 
-    private void ShakerSort()
+    private void ShakerSort(List<int> List, bool Ascending)
     {
-      List<int> ShakerList = NumberList;
+      List<int> ShakerList = List;
       Stopwatch stopwatch = new Stopwatch();
+      int Iteration = 0;
       stopwatch.Start();
 
       int left = 0, right = ShakerList.Count - 1, c;
       do
       {
+        ++Iteration;
         c = 0;
         for (int j = left; j < right; j++)
         {
-          if (ShakerList[j] > ShakerList[j + 1])
+          if ((Ascending && ShakerList[j] > ShakerList[j + 1]) || (!Ascending && ShakerList[j] < ShakerList[j + 1]))
           {
+
             int x = ShakerList[j];
             ShakerList[j] = ShakerList[j + 1];
             ShakerList[j + 1] = x;
@@ -105,8 +118,9 @@ namespace Sorting
         right = c;
         for (int j = right; j > left; j--)
         {
-          if (ShakerList[j - 1] > ShakerList[j])
+          if ((Ascending && ShakerList[j - 1] > ShakerList[j]) || (!Ascending && ShakerList[j - 1] < ShakerList[j]))
           {
+
             int x = ShakerList[j];
             ShakerList[j] = ShakerList[j - 1];
             ShakerList[j - 1] = x;
@@ -122,53 +136,56 @@ namespace Sorting
       {
         chart1.Series[2].Points.AddXY(i, ShakerList[i]);
       }
-      label5.Text = "Шейкер - " + stopwatch.ElapsedTicks.ToString();
+
+      label5.Text = "Шейкер - " + stopwatch.ElapsedTicks.ToString() + "    " + Iteration;
       TimerList.Add(stopwatch.ElapsedTicks);
+      IterationList.Add(Iteration);
     }
 
-    public static void Sort(List<int> array, int low, int high)
+    public void Sort(List<int> array, int left, int right, bool Ascending)
     {
-      if (low < high)
+      if (left < right)
       {
-        int pivotIndex = Partition(array, low, high);
-        Sort(array, low, pivotIndex);
-        Sort(array, pivotIndex + 1, high);
+        ++IterationQuick;
+        int pivotIndex = Partition(array, left, right,  Ascending);
+        Sort(array, left, pivotIndex - 1, Ascending);
+        Sort(array, pivotIndex + 1, right, Ascending);
       }
     }
 
-    private static int Partition(List<int> array, int low, int high)
+    private int Partition(List<int> array, int left, int right, bool Ascending)
     {
-      int pivot = array[low];
-      int i = low - 1;
-      int j = high + 1;
+      int pivot = array[right];
+      int i = (left - 1);
 
-      while (true)
+      for (int j = left; j < right; j++)
       {
-        do
+        if ((Ascending && array[j] <= pivot) || (!Ascending && array[j] >= pivot))
         {
           i++;
-        } while (array[i] < pivot);
-
-        do
-        {
-          j--;
-        } while (array[j] > pivot);
-
-        if (i >= j)
-          return j;
-
-        int temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
+          // Обмен элементов
+          int temp = array[i];
+          array[i] = array[j];
+          array[j] = temp;
+        }
       }
+      // Обмен опорного элемента с элементом, находящимся на позиции i+1
+      int swap = array[i + 1];
+      array[i + 1] = array[right];
+      array[right] = swap;
+
+      return i + 1;
     }
 
-    private void QuickSortRealise()
+
+    private void QuickSortRealise(List<int> List, bool Ascending)
     {
-      List<int> QuickList = NumberList;
+      List<int> QuickList = List;
       Stopwatch stopwatch = new Stopwatch();
+      IterationQuick = 0;
+
       stopwatch.Start();
-      Sort(QuickList, 0, QuickList.Count - 1);
+      Sort(QuickList, 0, QuickList.Count - 1, Ascending);
       stopwatch.Stop();
 
       chart1.Series[3].Points.Clear();
@@ -176,20 +193,30 @@ namespace Sorting
       {
         chart1.Series[3].Points.AddXY(i, QuickList[i]);
       }
-
-      label6.Text = "Быстрая - " + stopwatch.ElapsedTicks.ToString();
+      label6.Text = "Быстрая - " + stopwatch.ElapsedTicks.ToString() + "    " + IterationQuick;
       TimerList.Add(stopwatch.ElapsedTicks);
+      IterationList.Add(IterationQuick);
     }
 
-    private static bool IsSorted(List<int> data)
+    private static bool IsSorted(List<int> data, bool Ascending)
     {
       int count = data.Count;
 
-      while (--count >= 1)
+      for (int i = 1; i < count; i++)
       {
-        if (data[count] < data[count - 1])
+        if (Ascending)
         {
-          return false;
+          if (data[i] < data[i - 1])
+          {
+            return false;
+          }
+        }
+        else
+        {
+          if (data[i] > data[i - 1])
+          {
+            return false;
+          }
         }
       }
       return true;
@@ -209,13 +236,21 @@ namespace Sorting
       }
     }
 
-    private void BogoSort()
+    private void BogoSort(List<int> List, bool Ascending)
     {
-      List<int> BogoList = NumberList;
+      List<int> BogoList = List;
       Stopwatch stopwatch = new Stopwatch();
+      int Iteration = 0;
+
       stopwatch.Start();
-      while (!IsSorted(BogoList))
+      while (!IsSorted(BogoList, Ascending))
       {
+        if (Iteration >= 100000)
+        {
+          MessageBox.Show("Превышено количество итераций сортировки БОГО", "Стоп");
+          break;
+        }
+        ++Iteration;
         Shuffle(BogoList);
       }
       stopwatch.Stop();
@@ -226,8 +261,9 @@ namespace Sorting
         chart1.Series[4].Points.AddXY(i, BogoList[i]);
       }
 
-      label7.Text = "BOGO - " + stopwatch.ElapsedTicks.ToString();
+      label7.Text = "BOGO - " + stopwatch.ElapsedTicks.ToString() + "    " + Iteration;
       TimerList.Add(stopwatch.ElapsedTicks);
+      IterationList.Add(Iteration);
     }
 
     private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -235,43 +271,87 @@ namespace Sorting
 
     }
 
+    private void GetNumbersFromView()
+    {
+      string NumbersStrung = textBox1.Text;
+      NumberList = new List<int>();
+
+      if (NumbersStrung[textBox1.Text.Length - 1] != ' ')
+      {
+        NumbersStrung += ' ';
+      }
+
+      for (int index = 0; index < textBox1.Text.Length; ++index)
+      {
+        string strNum = "";
+        while (NumbersStrung[index] != ' ')
+        {
+          strNum += NumbersStrung[index];
+          ++index;
+        }
+        try
+        {
+          NumberList.Add(Convert.ToInt32(strNum));
+        }
+        catch
+        {
+          Console.WriteLine("Строка введена не верно");
+        }
+      }
+    }
+
     private void startToolStripMenuItem_Click(object sender, EventArgs e)
     {
+      TimerList = new List<long>();
+      IterationList = new List<int>();
+      bool AscendingKey = true;
+      
+      if (radioButton2.Checked)
+      {
+        AscendingKey = false;
+      }
+
       if (checkBox1.Checked)
       {
-        BubbleSort();
+        GetNumbersFromView();
+        BubbleSort(NumberList, AscendingKey);
       }
       if (checkBox2.Checked)
       {
-        InsertionSort();
+        GetNumbersFromView();
+        InsertionSort(NumberList, AscendingKey);
       }
       if (checkBox3.Checked)
       {
-        ShakerSort();
+        GetNumbersFromView();
+        ShakerSort(NumberList, AscendingKey);
       }
       if (checkBox4.Checked)
       {
-        QuickSortRealise();
+        GetNumbersFromView();
+        QuickSortRealise(NumberList, AscendingKey);
       }
       if (checkBox5.Checked)
       {
         if(NumberList.Count > 5)
         {
-          DialogResult dialogResult = MessageBox.Show("Внимание, BOGO сортировка большого массива может занять длительное время, вы уверены что хотите продолжить ?", "Предупреждение", MessageBoxButtons.YesNo);
-          if(dialogResult == DialogResult.Yes)
-          {
-            BogoSort();
-          }
+          GetNumbersFromView();
+          BogoSort(NumberList, AscendingKey);
         }
         else
         {
-          BogoSort();
+          GetNumbersFromView();
+          BogoSort(NumberList, AscendingKey);
         }
       }
+
       textBox3.Text = "";
-      if(TimerList.Count > 0)
+      textBox2.Text = "";
+
+      if (TimerList.Count > 0 && IterationList.Count > 0)
       {
         textBox3.Text = Convert.ToString(TimerList.Min());
+        textBox2.Text = Convert.ToString(IterationList.Min());
       }
     }
 
@@ -298,24 +378,29 @@ namespace Sorting
       }
       catch
       {
-        Console.WriteLine("Некорректный ввод ");
+        Console.WriteLine("Некорректный ввод");
+      }
+      finally
+      {
+        if(MaxNumber < MinNumber)
+        {
+          Console.WriteLine("Максимальное число должно быть больше минимального");
+          MaxNumber = 1;
+          MinNumber = 0;
+        }
       }
 
       Random r = new Random();
       for(int index = 0; index < ArraySize; ++index)
       {
-        NumberList.Add(r.Next(MinNumber, MaxNumber));
-      }
-      
-      foreach(int o in NumberList)
-      {
-        textBox1.Text += o.ToString() + " ";
+        textBox1.Text += r.Next(MinNumber, MaxNumber) + " ";
       }
 
       for(int index = 0; index < 5; ++index)
       {
         chart1.Series[index].Points.Clear();
       }
+      GetNumbersFromView();
       for (int index = 0; index < NumberList.Count; ++index)
       {
         chart1.Series[0].Points.AddXY(index, NumberList[index]);
@@ -338,12 +423,23 @@ namespace Sorting
 
     private void очиститьToolStripMenuItem_Click(object sender, EventArgs e)
     {
-      NumberList.Clear();
-      TimerList.Clear();
-      for(int i = 0; i < 5; ++i)
+      if (NumberList.Count > 0)
+      {
+        NumberList.Clear();
+      }
+
+      if (TimerList.Count > 0)
+      {
+        TimerList.Clear();
+      }
+
+      for (int i = 0; i < 5; ++i)
       {
         chart1.Series[i].Points.Clear();
       }
+
+
+
       textBox1.Text = "";
       textBox3.Text = "";
       label2.Text = "Пузыри";
@@ -402,11 +498,6 @@ namespace Sorting
 
     }
 
-    private void textBox2_TextChanged(object sender, EventArgs e)
-    {
-
-    }
-
     private void MainForm_Load(object sender, EventArgs e)
     {
       
@@ -418,6 +509,16 @@ namespace Sorting
     }
 
     private void укажитеМинимумToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+
+    }
+
+    private void panel1_Paint(object sender, PaintEventArgs e)
+    {
+
+    }
+
+    private void textBox3_TextChanged(object sender, EventArgs e)
     {
 
     }
